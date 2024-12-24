@@ -14,7 +14,8 @@ import { app, server } from "./config/socket.js";
 
 dotenv.config();
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increase limit to handle large JSON payloads
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 app.use(
     cors({
