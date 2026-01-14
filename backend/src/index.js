@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import path from 'path';
+import { errorHandler, notFound } from './middleware/errorHandler.js'
 
 // Load environment variables first
 dotenv.config();
@@ -49,6 +50,11 @@ app.use(requestLogger);
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/messages', messageRoutes);
+
+// Error handling middleware
+app.use(notFound);
+app.use(errorHandler);
+
 
 // Serve frontend in production
 const __dirname = path.resolve();
