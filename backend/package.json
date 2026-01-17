@@ -19,8 +19,11 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.2.1",
+    "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.2",
+    "rate-limit-redis": "^4.3.1",
     "real-time-chat": "file:..",
     "socket.io": "^4.8.1",
     "winston": "^3.19.0"

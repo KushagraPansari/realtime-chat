@@ -13,6 +13,13 @@ const requiredEnvVars = [
   'CLIENT_URL'
 ];
 
+const optionalEnvVars = [
+  'REDIS_HOST',
+  'REDIS_PORT',
+  'REDIS_PASSWORD',
+  'LOG_LEVEL'
+];
+
 export const validateEnv = () => {
   const missingVars = requiredEnvVars.filter(
     (varName) => !process.env[varName]
@@ -41,5 +48,10 @@ export const getEnvConfig = () => {
     },
     clientUrl: process.env.CLIENT_URL,
     logLevel: process.env.LOG_LEVEL || 'info',
+    redis: {
+      host: process.env.REDIS_HOST || 'localhost',
+      port: process.env.REDIS_PORT || 6379,
+      password: process.env.REDIS_PASSWORD || undefined,
+    }
   };
 };
