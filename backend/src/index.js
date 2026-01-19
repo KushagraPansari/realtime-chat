@@ -15,6 +15,7 @@ import { app, server } from './config/socket.js';
 
 // Middleware imports
 import { requestLogger } from './middleware/requestLogger.js';
+import { apiLimiter } from './middleware/rateLimiter.js';
 
 // Route imports
 import authRoutes from './routes/authRoute.js';
@@ -46,6 +47,8 @@ app.use(
 
 // Request logging
 app.use(requestLogger);
+
+app.use('/api/', apiLimiter);
 
 // Routes
 app.use('/api/auth', authRoutes);
