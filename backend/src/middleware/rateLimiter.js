@@ -1,15 +1,40 @@
 import rateLimit from 'express-rate-limit';
-import RedisStore from 'rate-limit-redis';
-import redis from '../config/redis.js';
 import logger from '../utils/logger.js';
 
+let RedisStore;
+let redis;
+let useRedis = false;
+
+try {
+  const redisModule = await import('../config/redis.js');
+  redis = redisModule.default;
+  const rateLimitRedis = await import('rate-limit-redis');
+  RedisStore = rateLimitRedis.RedisStore;
+  
+  await redis.ping();
+  useRedis = true;
+  logger.info('Rate limiting using Redis store');
+} catch (error) {
+  logger.warn('Redis not available, using in-memory rate limiting (not suitable for production)');
+  useRedis = false;
+}
+
+const getStoreConfig = () => {
+  if (useRedis) {
+    return {
+      store: new RedisStore({
+        sendCommand: (...args) => redis.call(...args),
+      })
+    };
+  }
+  return {};
+};
+
+
 export const apiLimiter = rateLimit({
-  store: new RedisStore({
-    client: redis,
-    prefix: 'rl:api:',
-  }),
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  ...getStoreConfig(),
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later.'
@@ -25,12 +50,8 @@ export const apiLimiter = rateLimit({
   }
 });
 
-
 export const authLimiter = rateLimit({
-  store: new RedisStore({
-    client: redis,
-    prefix: 'rl:auth:',
-  }),
+  ...getStoreConfig(),
   windowMs: 15 * 60 * 1000,
   max: 5,
   skipSuccessfulRequests: true,
@@ -48,10 +69,7 @@ export const authLimiter = rateLimit({
 });
 
 export const messageLimiter = rateLimit({
-  store: new RedisStore({
-    client: redis,
-    prefix: 'rl:message:',
-  }),
+  ...getStoreConfig(),
   windowMs: 60 * 1000,
   max: 20,
   message: {

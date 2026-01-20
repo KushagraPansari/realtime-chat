@@ -1,7 +1,6 @@
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
-import redis from "./redis.js";
 import logger from "../utils/logger.js";
 
 const app = express();
@@ -14,25 +13,46 @@ const io = new Server(server, {
   },
 });
 
+let redis;
+let useRedis = false;
 
+try {
+  const redisModule = await import('./redis.js');
+  redis = redisModule.default;
+  await redis.ping();
+  useRedis = true;
+  logger.info('Socket.io using Redis for online users');
+} catch (error) {
+  logger.warn('Redis not available, using in-memory for online users (single server only)');
+  useRedis = false;
+}
+
+const userSocketMap = {};
 const ONLINE_USERS_KEY = 'online_users';
 
 export async function getReceiverSocketId(userId) {
-  try {
-    return await redis.hget(ONLINE_USERS_KEY, userId.toString());
-  } catch (error) {
-    logger.error('Error getting receiver socket ID:', error);
-    return null;
+  if (useRedis) {
+    try {
+      return await redis.hget(ONLINE_USERS_KEY, userId.toString());
+    } catch (error) {
+      logger.error('Error getting receiver socket ID:', error);
+      return null;
+    }
+  } else {
+    return userSocketMap[userId];
   }
 }
 
 export async function getOnlineUsers() {
-  try {
-    const users = await redis.hkeys(ONLINE_USERS_KEY);
-    return users;
-  } catch (error) {
-    logger.error('Error getting online users:', error);
-    return [];
+  if (useRedis) {
+    try {
+      return await redis.hkeys(ONLINE_USERS_KEY);
+    } catch (error) {
+      logger.error('Error getting online users:', error);
+      return [];
+    }
+  } else {
+    return Object.keys(userSocketMap);
   }
 }
 
@@ -42,33 +62,38 @@ io.on("connection", async (socket) => {
   const userId = socket.handshake.query.userId;
   
   if (userId && userId !== 'undefined') {
-    try {
-      await redis.hset(ONLINE_USERS_KEY, userId.toString(), socket.id);
-      
-      const onlineUsers = await getOnlineUsers();
-      io.emit("getOnlineUsers", onlineUsers);
-      
-      logger.info(`User ${userId} is now online`);
-    } catch (error) {
-      logger.error('Error adding user to online list:', error);
+    if (useRedis) {
+      try {
+        await redis.hset(ONLINE_USERS_KEY, userId.toString(), socket.id);
+      } catch (error) {
+        logger.error('Error adding user to online list:', error);
+      }
+    } else {
+      userSocketMap[userId] = socket.id;
     }
+    
+    const onlineUsers = await getOnlineUsers();
+    io.emit("getOnlineUsers", onlineUsers);
+    logger.info(`User ${userId} is now online`);
   }
 
   socket.on("disconnect", async () => {
     logger.info("User disconnected:", socket.id);
     
     if (userId && userId !== 'undefined') {
-      try {
-
-        await redis.hdel(ONLINE_USERS_KEY, userId.toString());
-        
-        const onlineUsers = await getOnlineUsers();
-        io.emit("getOnlineUsers", onlineUsers);
-        
-        logger.info(`User ${userId} is now offline`);
-      } catch (error) {
-        logger.error('Error removing user from online list:', error);
+      if (useRedis) {
+        try {
+          await redis.hdel(ONLINE_USERS_KEY, userId.toString());
+        } catch (error) {
+          logger.error('Error removing user from online list:', error);
+        }
+      } else {
+        delete userSocketMap[userId];
       }
+      
+      const onlineUsers = await getOnlineUsers();
+      io.emit("getOnlineUsers", onlineUsers);
+      logger.info(`User ${userId} is now offline`);
     }
   });
 });
