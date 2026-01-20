@@ -20,6 +20,7 @@ import { apiLimiter } from './middleware/rateLimiter.js';
 // Route imports
 import authRoutes from './routes/authRoute.js';
 import messageRoutes from './routes/messageRoute.js';
+import healthRoutes from './routes/healthRoute.js';
 
 // Utils
 import logger from './utils/logger.js';
@@ -51,6 +52,7 @@ app.use(requestLogger);
 app.use('/api/', apiLimiter);
 
 // Routes
+app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/messages', messageRoutes);
 
