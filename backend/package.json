@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "logs:clean": "rm -rf logs/*.log"
+    "logs:clean": "rm -rf logs/*.log",
+    "redis:flush": "redis-cli FLUSHALL"
   },
   "keywords": [],
   "author": "",
