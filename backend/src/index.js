@@ -56,6 +56,9 @@ app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/messages', messageRoutes);
 
+// Ignore favicon requests
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // Error handling middleware
 app.use(notFound);
 app.use(errorHandler);
