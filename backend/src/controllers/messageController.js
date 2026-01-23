@@ -30,14 +30,13 @@ export const getMessages = async (req, res) => {
             $or:[
                 {senderId:myId,receiverId:userToChatId},
                 {senderId:userToChatId,receiverId:myId}
-            ]
-        })
+            ],isDeleted:false
+        }).sort({createdAt:1});
         
 
-        res.status(200).json(messages);
+       res.status(200).json({success: true, messages});
     } catch (error) {
-        console.log("Error in getMessages",error.message);
-        res.status(500).json({message:"Server Error"});
+        next(error);
     }
 }
 
@@ -156,6 +155,95 @@ export const removeReaction = async (req, res, next) => {
       success: true,
       message: "Reaction removed",
       reactions: message.reactions
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const editMessage = async (req, res, next) => {
+  try {
+    const { id: messageId } = req.params;
+    const { text } = req.body;
+    const userId = req.user._id;
+
+    const message = await Message.findById(messageId);
+
+    if (!message) {
+      throw new NotFoundError("Message not found");
+    }
+
+    if (message.senderId.toString() !== userId.toString()) {
+      throw new AuthorizationError("You can only edit your own messages");
+    }
+
+    if (message.isDeleted) {
+      throw new ValidationError("Cannot edit deleted message");
+    }
+
+    const fifteenMinutes = 15 * 60 * 1000;
+    if (Date.now() - message.createdAt.getTime() > fifteenMinutes) {
+      throw new ValidationError("Cannot edit messages older than 15 minutes");
+    }
+
+    message.text = text;
+    message.isEdited = true;
+    message.editedAt = new Date();
+    await message.save();
+
+    const receiverSocketId = await getReceiverSocketId(message.receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("messageEdited", {
+        messageId,
+        text,
+        editedAt: message.editedAt
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Message edited successfully",
+      data: message
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteMessage = async (req, res, next) => {
+  try {
+    const { id: messageId } = req.params;
+    const userId = req.user._id;
+
+    const message = await Message.findById(messageId);
+
+    if (!message) {
+      throw new NotFoundError("Message not found");
+    }
+
+    if (message.senderId.toString() !== userId.toString()) {
+      throw new AuthorizationError("You can only delete your own messages");
+    }
+
+    if (message.isDeleted) {
+      throw new ValidationError("Message already deleted");
+    }
+
+    message.isDeleted = true;
+    message.deletedAt = new Date();
+    await message.save();
+
+    const receiverSocketId = await getReceiverSocketId(message.receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("messageDeleted", {
+        messageId,
+        deletedAt: message.deletedAt
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Message deleted successfully"
     });
   } catch (error) {
     next(error);
