@@ -10,16 +10,45 @@ import {
 } from "../utils/errors/AppError.js";
 
 
-export const getUsersForSidebar = async (req, res) => {
-     try{
-        const loggedInUserId = req.user._id;
-        const filteredUsers=await User.find({_id:{$ne:loggedInUserId}}).select("-password");
-        res.status(200).json(filteredUsers);
-     }catch(error){
-         console.error("Error in getUsersForSidebar",error.message);
-            res.status(500).json({message:"Server Error"});
-     }
-}
+export const getUsersForSidebar = async (req, res, next) => {
+  try {
+    const loggedInUserId = req.user._id;
+    
+    // Fetching all users except the logged-in user
+    const filteredUsers = await User.find({ 
+      _id: { $ne: loggedInUserId } 
+    }).select("-password");
+
+    // for each user, fetching last message with logged in user
+    const usersWithLastMessage = await Promise.all(
+      filteredUsers.map(async (user) => {
+        const lastMessage = await Message.findOne({
+          $or: [
+            { senderId: loggedInUserId, receiverId: user._id },
+            { senderId: user._id, receiverId: loggedInUserId }
+          ],
+          isDeleted: false
+        }).sort({ createdAt: -1 });
+
+        return {
+          ...user.toObject(),
+          lastMessage: lastMessage ? {
+            text: lastMessage.text,
+            createdAt: lastMessage.createdAt,
+            isRead: lastMessage.readBy.some(r => r.userId.toString() === loggedInUserId.toString())
+          } : null
+        };
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      users: usersWithLastMessage
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const getMessages = async (req, res) => {
     try {
