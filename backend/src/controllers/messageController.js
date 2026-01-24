@@ -249,3 +249,41 @@ export const deleteMessage = async (req, res, next) => {
     next(error);
   }
 };
+
+
+export const markAsRead = async (req, res, next) => {
+  try {
+    const { id: senderId } = req.params;
+    const userId = req.user._id;
+    await Message.updateMany(
+      {
+        senderId: senderId,
+        receiverId: userId,
+        'readBy.userId': { $ne: userId },
+        isDeleted: false
+      },
+      {
+        $push: {
+          readBy: {
+            userId: userId,
+            readAt: new Date()
+          }
+        }
+      }
+    );
+
+    const senderSocketId = await getReceiverSocketId(senderId);
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("messagesRead", {
+        readBy: userId,
+        readAt: new Date()
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Messages marked as read"
+    });
+  } catch (error) {
+    next(error);
+  }
+};

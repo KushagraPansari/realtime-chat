@@ -1,6 +1,6 @@
 import express from 'express';
 import { isLoggedIn } from '../middleware/authMiddleware.js';
-import { getMessages, getUsersForSidebar, sendMessage, addReaction, removeReaction, editMessage, deleteMessage } from '../controllers/messageController.js';
+import { getMessages, getUsersForSidebar, sendMessage, addReaction, removeReaction, editMessage, deleteMessage, markAsRead } from '../controllers/messageController.js';
 import { validate } from "../middleware/validate.js";
 import { sendMessageSchema, addReactionSchema, editMessageSchema} from "../validators/messageValidator.js";
 import { messageLimiter } from "../middleware/rateLimiter.js";
@@ -18,5 +18,7 @@ router.delete("/:id/reaction", isLoggedIn, validate(addReactionSchema), removeRe
 
 router.put("/:id", isLoggedIn, validate(editMessageSchema), editMessage);
 router.delete("/:id", isLoggedIn, deleteMessage);
+
+router.post("/:id/read", isLoggedIn, markAsRead);
 
 export default router; 
