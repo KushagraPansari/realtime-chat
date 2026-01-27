@@ -21,6 +21,7 @@ import { apiLimiter } from './middleware/rateLimiter.js';
 import authRoutes from './routes/authRoute.js';
 import messageRoutes from './routes/messageRoute.js';
 import healthRoutes from './routes/healthRoute.js';
+import groupRoutes from './routes/groupRoute.js';
 
 // Utils
 import logger from './utils/logger.js';
@@ -55,6 +56,7 @@ app.use('/api/', apiLimiter);
 app.use('/api/health', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/groups', groupRoutes);
 
 // Ignore favicon requests
 app.get('/favicon.ico', (req, res) => res.status(204).end());

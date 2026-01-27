@@ -44,3 +44,39 @@ export const addReactionSchema = Joi.object({
       'any.required': 'Emoji is required'
     })
 });
+
+export const createGroupSchema = Joi.object({
+  name: Joi.string()
+    .min(1)
+    .max(100)
+    .required()
+    .messages({
+      'string.min': 'Group name cannot be empty',
+      'string.max': 'Group name cannot exceed 100 characters',
+      'any.required': 'Group name is required'
+    }),
+  description: Joi.string()
+    .max(500)
+    .optional()
+    .allow('')
+    .messages({
+      'string.max': 'Description cannot exceed 500 characters'
+    }),
+  memberIds: Joi.array()
+    .items(Joi.string())
+    .optional()
+    .messages({
+      'array.base': 'Member IDs must be an array'
+    })
+});
+
+export const addMembersSchema = Joi.object({
+  memberIds: Joi.array()
+    .items(Joi.string())
+    .min(1)
+    .required()
+    .messages({
+      'array.min': 'At least one member ID is required',
+      'any.required': 'Member IDs are required'
+    })
+});
