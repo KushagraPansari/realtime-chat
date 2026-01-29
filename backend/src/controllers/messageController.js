@@ -53,21 +53,40 @@ export const getUsersForSidebar = async (req, res, next) => {
 
 export const getMessages = async (req, res) => {
     try {
-        const{id:userToChatId}=req.params
-        const myId=req.user._id;
+    const { id: userToChatId } = req.params;
+    const { cursor, limit = 50 } = req.query;
+    const myId = req.user._id;
 
-        const messages=await Message.find({
-            $or:[
-                {senderId:myId,receiverId:userToChatId},
-                {senderId:userToChatId,receiverId:myId}
-            ],isDeleted:false
-        }).sort({createdAt:1});
-        
+    const query = {
+      $or: [
+        { senderId: myId, receiverId: userToChatId },
+        { senderId: userToChatId, receiverId: myId }
+      ],
+      isDeleted: false
+    };
 
-       res.status(200).json({success: true, messages});
-    } catch (error) {
-        next(error);
+    if (cursor) {
+      query._id = { $lt: cursor };
     }
+
+    const messages = await Message.find(query)
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
+
+    const hasMore = messages.length === parseInt(limit);
+    const nextCursor = hasMore ? messages[messages.length - 1]._id : null;
+
+    res.status(200).json({
+      success: true,
+      messages: messages.reverse(),
+      pagination: {
+        hasMore,
+        nextCursor
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
 }
 
 export const sendMessage = async (req, res) => {
