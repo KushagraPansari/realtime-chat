@@ -28,6 +28,7 @@ try {
 }
 
 const userSocketMap = {};
+const typingUsers = {}; // Track typing users
 const ONLINE_USERS_KEY = 'online_users';
 
 export async function getReceiverSocketId(userId) {
@@ -87,19 +88,86 @@ io.on("connection", async (socket) => {
     logger.info(`User ${userId} left group ${groupId}`);
   });
 
-  socket.on("typing", (receiverId) => {
-    const receiverSocketId = userSocketMap[receiverId] || null;
+  socket.on("typing", async ({ receiverId, isTyping }) => {
+    const receiverSocketId = await getReceiverSocketId(receiverId);
+    
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("userTyping", userId);
+      if (isTyping) {
+        io.to(receiverSocketId).emit("userTyping", { 
+          userId, 
+          isTyping: true 
+        });
+        
+        if (typingUsers[userId]) {
+          clearTimeout(typingUsers[userId]);
+        }
+        
+        typingUsers[userId] = setTimeout(() => {
+          io.to(receiverSocketId).emit("userTyping", { 
+            userId, 
+            isTyping: false 
+          });
+          delete typingUsers[userId];
+        }, 3000);
+      } else {
+        io.to(receiverSocketId).emit("userTyping", { 
+          userId, 
+          isTyping: false 
+        });
+        
+        if (typingUsers[userId]) {
+          clearTimeout(typingUsers[userId]);
+          delete typingUsers[userId];
+        }
+      }
     }
   });
 
-  socket.on("groupTyping", (groupId) => {
-    socket.to(groupId).emit("userGroupTyping", { userId, groupId });
+  socket.on("groupTyping", ({ groupId, isTyping }) => {
+    if (isTyping) {
+      socket.to(groupId).emit("userGroupTyping", { 
+        userId, 
+        groupId,
+        isTyping: true 
+      });
+      
+      const key = `${userId}-${groupId}`;
+      if (typingUsers[key]) {
+        clearTimeout(typingUsers[key]);
+      }
+      
+      typingUsers[key] = setTimeout(() => {
+        socket.to(groupId).emit("userGroupTyping", { 
+          userId, 
+          groupId,
+          isTyping: false 
+        });
+        delete typingUsers[key];
+      }, 3000);
+    } else {
+      socket.to(groupId).emit("userGroupTyping", { 
+        userId, 
+        groupId,
+        isTyping: false 
+      });
+      
+      const key = `${userId}-${groupId}`;
+      if (typingUsers[key]) {
+        clearTimeout(typingUsers[key]);
+        delete typingUsers[key];
+      }
+    }
   });
 
   socket.on("disconnect", async () => {
     logger.info("User disconnected:", socket.id);
+    
+    Object.keys(typingUsers).forEach(key => {
+      if (key.startsWith(userId) || key === userId) {
+        clearTimeout(typingUsers[key]);
+        delete typingUsers[key];
+      }
+    });
     
     if (userId && userId !== 'undefined') {
       if (useRedis) {
