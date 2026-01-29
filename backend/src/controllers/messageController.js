@@ -1,5 +1,6 @@
 import User from "../models/userModel.js";
 import Message from "../models/messageModel.js";
+import Group from "../models/groupModel.js";
 
 import cloudinary from "../config/cloudinary.js";
 import { getReceiverSocketId, io } from "../config/socket.js";
@@ -311,6 +312,107 @@ export const markAsRead = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Messages marked as read"
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const sendGroupMessage = async (req, res, next) => {
+  try {
+    const { text, image } = req.body;
+    const { id: groupId } = req.params;
+    const senderId = req.user._id;
+
+    const group = await Group.findById(groupId);
+    
+    if (!group) {
+      throw new NotFoundError("Group not found");
+    }
+
+    const isMember = group.members.some(
+      m => m.userId.toString() === senderId.toString()
+    );
+
+    if (!isMember) {
+      throw new AuthorizationError("You are not a member of this group");
+    }
+
+    let imageUrl;
+    if (image) {
+      const uploadResponse = await cloudinary.uploader.upload(image);
+      imageUrl = uploadResponse.secure_url;
+    }
+
+    const newMessage = new Message({
+      senderId,
+      groupId,
+      text,
+      image: imageUrl
+    });
+
+    await newMessage.save();
+
+    const populatedMessage = await Message.findById(newMessage._id)
+      .populate('senderId', 'fullName profilePic');
+
+    io.to(groupId.toString()).emit("newGroupMessage", populatedMessage);
+
+    res.status(201).json({
+      success: true,
+      message: populatedMessage
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const getGroupMessages = async (req, res, next) => {
+  try {
+    const { id: groupId } = req.params;
+    const { cursor, limit = 50 } = req.query;
+    const userId = req.user._id;
+
+    const group = await Group.findById(groupId);
+    
+    if (!group) {
+      throw new NotFoundError("Group not found");
+    }
+
+    const isMember = group.members.some(
+      m => m.userId.toString() === userId.toString()
+    );
+
+    if (!isMember) {
+      throw new AuthorizationError("You are not a member of this group");
+    }
+
+    const query = {
+      groupId,
+      isDeleted: false
+    };
+
+    if (cursor) {
+      query._id = { $lt: cursor };
+    }
+
+    const messages = await Message.find(query)
+      .populate('senderId', 'fullName profilePic')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
+
+    const hasMore = messages.length === parseInt(limit);
+    const nextCursor = hasMore ? messages[messages.length - 1]._id : null;
+
+    res.status(200).json({
+      success: true,
+      messages: messages.reverse(),
+      pagination: {
+        hasMore,
+        nextCursor
+      }
     });
   } catch (error) {
     next(error);

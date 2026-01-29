@@ -77,6 +77,27 @@ io.on("connection", async (socket) => {
     logger.info(`User ${userId} is now online`);
   }
 
+  socket.on("joinGroup", (groupId) => {
+    socket.join(groupId);
+    logger.info(`User ${userId} joined group ${groupId}`);
+  });
+
+  socket.on("leaveGroup", (groupId) => {
+    socket.leave(groupId);
+    logger.info(`User ${userId} left group ${groupId}`);
+  });
+
+  socket.on("typing", (receiverId) => {
+    const receiverSocketId = userSocketMap[receiverId] || null;
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("userTyping", userId);
+    }
+  });
+
+  socket.on("groupTyping", (groupId) => {
+    socket.to(groupId).emit("userGroupTyping", { userId, groupId });
+  });
+
   socket.on("disconnect", async () => {
     logger.info("User disconnected:", socket.id);
     
