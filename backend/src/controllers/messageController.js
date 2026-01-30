@@ -15,12 +15,10 @@ export const getUsersForSidebar = async (req, res, next) => {
   try {
     const loggedInUserId = req.user._id;
     
-    // Fetching all users except the logged-in user
     const filteredUsers = await User.find({ 
       _id: { $ne: loggedInUserId } 
     }).select("-password");
 
-    // for each user, fetching last message with logged in user
     const usersWithLastMessage = await Promise.all(
       filteredUsers.map(async (user) => {
         const lastMessage = await Message.findOne({
@@ -32,7 +30,11 @@ export const getUsersForSidebar = async (req, res, next) => {
         }).sort({ createdAt: -1 });
 
         return {
-          ...user.toObject(),
+          _id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          profilePic: user.profilePic,
+          type: 'user',
           lastMessage: lastMessage ? {
             text: lastMessage.text,
             createdAt: lastMessage.createdAt,
@@ -42,9 +44,42 @@ export const getUsersForSidebar = async (req, res, next) => {
       })
     );
 
+    const groups = await Group.find({
+      'members.userId': loggedInUserId
+    }).populate('members.userId', 'fullName profilePic');
+
+    const groupsWithLastMessage = await Promise.all(
+      groups.map(async (group) => {
+        const lastMessage = await Message.findOne({
+          groupId: group._id,
+          isDeleted: false
+        }).sort({ createdAt: -1 }).populate('senderId', 'fullName');
+
+        return {
+          _id: group._id,
+          name: group.name,
+          description: group.description,
+          avatar: group.avatar,
+          members: group.members,
+          type: 'group',
+          lastMessage: lastMessage ? {
+            text: lastMessage.text,
+            senderName: lastMessage.senderId.fullName,
+            createdAt: lastMessage.createdAt
+          } : null
+        };
+      })
+    );
+
+    const combined = [...usersWithLastMessage, ...groupsWithLastMessage].sort((a, b) => {
+      const aTime = a.lastMessage?.createdAt || new Date(0);
+      const bTime = b.lastMessage?.createdAt || new Date(0);
+      return bTime - aTime;
+    });
+
     res.status(200).json({
       success: true,
-      users: usersWithLastMessage
+      chats: combined
     });
   } catch (error) {
     next(error);

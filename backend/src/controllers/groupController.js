@@ -11,21 +11,30 @@ export const createGroup = async (req, res, next) => {
     const { name, description, memberIds } = req.body;
     const creatorId = req.user._id;
 
+    const sanitizedName = name.trim();
+    
+    if (!sanitizedName) {
+      throw new ValidationError("Group name cannot be empty");
+    }
+
     const members = [
       { userId: creatorId, role: 'admin' }
     ];
 
     if (memberIds && memberIds.length > 0) {
-      memberIds.forEach(memberId => {
+      const uniqueMemberIds = [...new Set(memberIds)];
+      uniqueMemberIds.forEach(memberId => {
         if (memberId !== creatorId.toString()) {
           members.push({ userId: memberId, role: 'member' });
         }
       });
     }
-
+    if (members.length > 50) {
+      throw new ValidationError("Group cannot have more than 50 members");
+    }
     const group = new Group({
-      name,
-      description,
+      name: sanitizedName,
+      description: description?.trim() || "",
       members,
       createdBy: creatorId
     });
