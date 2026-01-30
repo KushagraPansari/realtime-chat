@@ -50,7 +50,6 @@ app.use(
 // Request logging
 app.use(requestLogger);
 
-app.use('/api/', apiLimiter);
 
 // Routes
 app.use('/api/health', healthRoutes);

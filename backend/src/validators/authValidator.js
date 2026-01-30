@@ -6,6 +6,7 @@ export const signupSchema = Joi.object({
     .required()
     .messages({
       'string.email': 'Please provide a valid email address',
+      'string.empty': 'Email is required',
       'any.required': 'Email is required'
     }),
   fullName: Joi.string()
@@ -15,6 +16,7 @@ export const signupSchema = Joi.object({
     .messages({
       'string.min': 'Full name must be at least 2 characters',
       'string.max': 'Full name cannot exceed 50 characters',
+      'string.empty': 'Full name is required',
       'any.required': 'Full name is required'
     }),
   password: Joi.string()
@@ -22,6 +24,7 @@ export const signupSchema = Joi.object({
     .required()
     .messages({
       'string.min': 'Password must be at least 6 characters',
+      'string.empty': 'Password is required',
       'any.required': 'Password is required'
     })
 });
