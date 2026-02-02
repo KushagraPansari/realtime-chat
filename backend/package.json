@@ -10,7 +10,13 @@
     "test:watch": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "test:coverage": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "logs:clean": "rm -rf logs/*.log",
-    "redis:flush": "redis-cli FLUSHALL"
+    "redis:flush": "redis-cli FLUSHALL",
+    "docker:dev": "docker compose -f docker-compose.dev.yml up --build",
+    "docker:dev:down": "docker compose -f docker-compose.dev.yml down -v",
+    "docker:prod": "docker compose up --build",
+    "docker:prod:down": "docker compose down -v",
+    "docker:logs": "docker compose logs -f backend",
+    "docker:clean": "docker system prune -af --volumes"
   },
   "keywords": [],
   "author": "",

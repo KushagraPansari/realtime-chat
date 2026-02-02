@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: chat-mongodb-dev
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: realtime_chat
+    volumes:
+      - mongodb_dev_data:/data/db
+    networks:
+      - chat-network-dev
+
+  redis:
+    image: redis:7-alpine
+    container_name: chat-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - chat-network-dev
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: chat-backend-dev
+    ports:
+      - "5001:5001"
+    environment:
+      NODE_ENV: development
+      PORT: 5001
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/realtime_chat?authSource=admin
+      JWT_SECRET: ${JWT_SECRET}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      CLIENT_URL: http://localhost:5173
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - chat-network-dev
+
+volumes:
+  mongodb_dev_data:
+  redis_dev_data:
+
+networks:
+  chat-network-dev:
+    driver: bridge

@@ -19,11 +19,19 @@ import { requestLogger } from '../middleware/requestLogger.js';
 import { errorHandler, notFound } from '../middleware/errorHandler.js';
 import authRoutes from '../routes/authRoute.js';
 import messageRoutes from '../routes/messageRoute.js';
-import healthRoutes from '../routes/healthRoute.js';
 import groupRoutes from '../routes/groupRoute.js';
 
 app.use(requestLogger);
-app.use('/api/health', healthRoutes);
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV
+  });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/groups', groupRoutes);
@@ -39,6 +47,7 @@ const io = new Server(server, {
     credentials: true
   },
 });
+
 let redis;
 let useRedis = false;
 
