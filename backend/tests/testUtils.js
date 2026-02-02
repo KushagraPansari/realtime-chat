@@ -13,6 +13,18 @@ export const createTestUser = async (userData = {}) => {
     .post('/api/auth/signup')
     .send(defaultUser);
 
+  if (response.status !== 201) {
+    throw new Error(
+      `Failed to create user (${response.status}): ${JSON.stringify(response.body)}`
+    );
+  }
+
+  if (!response.headers['set-cookie']) {
+    throw new Error(
+      `No cookie in response: ${JSON.stringify(response.headers)}`
+    );
+  }
+
   return {
     user: response.body,
     cookie: response.headers['set-cookie']
@@ -39,6 +51,12 @@ export const loginUser = async (email, password) => {
     .post('/api/auth/login')
     .send({ email, password });
 
+  if (!response.headers['set-cookie']) {
+    throw new Error(
+      `Login failed (${response.status}): ${JSON.stringify(response.body)}`
+    );
+  }
+
   return response.headers['set-cookie'];
 };
 
@@ -55,8 +73,15 @@ export const createTestGroup = async (cookie, groupData = {}) => {
     .set('Cookie', cookie)
     .send(defaultGroup);
 
+  if (response.status !== 201) {
+    throw new Error(
+      `Failed to create group (${response.status}): ${JSON.stringify(response.body)}`
+    );
+  }
+
   return response.body.group;
 };
+
 export const sendTestMessage = async (cookie, receiverId, messageData = {}) => {
   const defaultMessage = {
     text: 'Test message',
@@ -67,6 +92,12 @@ export const sendTestMessage = async (cookie, receiverId, messageData = {}) => {
     .post(`/api/messages/send/${receiverId}`)
     .set('Cookie', cookie)
     .send(defaultMessage);
+
+  if (response.status !== 201) {
+    throw new Error(
+      `Failed to send message (${response.status}): ${JSON.stringify(response.body)}`
+    );
+  }
 
   return response.body;
 };

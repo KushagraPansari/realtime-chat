@@ -12,20 +12,39 @@ process.env.CLIENT_URL = "http://localhost:3000";
 process.env.PORT = "5002";
 process.env.LOG_LEVEL = "error";
 
+process.env.REDIS_HOST = "";
+process.env.REDIS_PORT = "";
+
 beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
   const mongoUri = mongoServer.getUri();
-  
   await mongoose.connect(mongoUri);
-  
   console.log('✓ Test database connected');
 });
 
 afterAll(async () => {
   await mongoose.disconnect();
   await mongoServer.stop();
+  
+  try {
+    const { io, server } = await import('../src/config/socket.js');
+    
+    if (io && io.close) {
+      await new Promise((resolve) => {
+        io.close(() => resolve());
+      });
+    }
+    
+    if (server && server.close) {
+      await new Promise((resolve) => {
+        server.close(() => resolve());
+      });
+    }
+  } catch (error) {
+  }
+  
   console.log('✓ Test database disconnected');
-});
+}, 10000);
 
 afterEach(async () => {
   const collections = mongoose.connection.collections;

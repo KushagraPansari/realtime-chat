@@ -7,8 +7,12 @@ import { authLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
-router.post('/signup', authLimiter, validate(signupSchema), signup);
-router.post('/login', authLimiter,validate(loginSchema), login);
+const rateLimiter = process.env.NODE_ENV === 'test' 
+  ? (req, res, next) => next() 
+  : authLimiter;
+
+router.post('/signup', rateLimiter, validate(signupSchema), signup);
+router.post('/login', rateLimiter, validate(loginSchema), login);
 router.post('/logout', logout);
 
 router.put('/updateProfile', isLoggedIn, updateProfile);
