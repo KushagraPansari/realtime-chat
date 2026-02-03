@@ -10,7 +10,7 @@ export const createTestUser = async (userData = {}) => {
   };
 
   const response = await request(app)
-    .post('/api/auth/signup')
+    .post('/api/v1/auth/signup')
     .send(defaultUser);
 
   if (response.status !== 201) {
@@ -48,7 +48,7 @@ export const createTestUsers = async (count) => {
 
 export const loginUser = async (email, password) => {
   const response = await request(app)
-    .post('/api/auth/login')
+    .post('/api/v1/auth/login')
     .send({ email, password });
 
   if (!response.headers['set-cookie']) {
@@ -69,7 +69,7 @@ export const createTestGroup = async (cookie, groupData = {}) => {
   };
 
   const response = await request(app)
-    .post('/api/groups')
+    .post('/api/v1/groups')
     .set('Cookie', cookie)
     .send(defaultGroup);
 
@@ -89,7 +89,7 @@ export const sendTestMessage = async (cookie, receiverId, messageData = {}) => {
   };
 
   const response = await request(app)
-    .post(`/api/messages/send/${receiverId}`)
+    .post(`/api/v1/messages/send/${receiverId}`)
     .set('Cookie', cookie)
     .send(defaultMessage);
 

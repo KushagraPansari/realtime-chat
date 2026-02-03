@@ -3,7 +3,7 @@ import { app } from '../../src/config/socket.js';
 import User from '../../src/models/userModel.js';
 
 describe('Auth API Integration Tests', () => {
-  describe('POST /api/auth/signup', () => {
+  describe('POST /api/v1/auth/signup', () => {
     test('should create a new user in database', async () => {
       const userData = {
         email: 'test@example.com',
@@ -12,7 +12,7 @@ describe('Auth API Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/auth/signup')
+        .post('/api/v1/auth/signup')
         .send(userData)
         .expect(201);
 
@@ -35,7 +35,7 @@ describe('Auth API Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/auth/signup')
+        .post('/api/v1/auth/signup')
         .send(userData);
 
       expect(response.headers['set-cookie']).toBeDefined();
@@ -50,11 +50,11 @@ describe('Auth API Integration Tests', () => {
       };
 
       await request(app)
-        .post('/api/auth/signup')
+        .post('/api/v1/auth/signup')
         .send(userData);
 
       const response = await request(app)
-        .post('/api/auth/signup')
+        .post('/api/v1/auth/signup')
         .send(userData)
         .expect(409);
 
@@ -70,7 +70,7 @@ describe('Auth API Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/auth/signup')
+        .post('/api/v1/auth/signup')
         .send(invalidData)
         .expect(400);
 
@@ -81,10 +81,10 @@ describe('Auth API Integration Tests', () => {
     });
   });
 
-  describe('POST /api/auth/login', () => {
+  describe('POST /api/v1/auth/login', () => {
     beforeEach(async () => {
       await request(app)
-        .post('/api/auth/signup')
+        .post('/api/v1/auth/signup')
         .send({
           email: 'logintest@example.com',
           fullName: 'Login Test',
@@ -94,7 +94,7 @@ describe('Auth API Integration Tests', () => {
 
     test('should login with correct credentials', async () => {
       const response = await request(app)
-        .post('/api/auth/login')
+        .post('/api/v1/auth/login')
         .send({
           email: 'logintest@example.com',
           password: 'password123'
@@ -108,7 +108,7 @@ describe('Auth API Integration Tests', () => {
 
     test('should fail with wrong password', async () => {
       const response = await request(app)
-        .post('/api/auth/login')
+        .post('/api/v1/auth/login')
         .send({
           email: 'logintest@example.com',
           password: 'wrongpassword'
@@ -120,7 +120,7 @@ describe('Auth API Integration Tests', () => {
 
     test('should fail with non-existent email', async () => {
       const response = await request(app)
-        .post('/api/auth/login')
+        .post('/api/v1/auth/login')
         .send({
           email: 'nonexistent@example.com',
           password: 'password123'
@@ -131,10 +131,10 @@ describe('Auth API Integration Tests', () => {
     });
   });
 
-  describe('GET /api/auth/check', () => {
+  describe('GET /api/v1/auth/check', () => {
     test('should return user data when authenticated', async () => {
       const signupResponse = await request(app)
-        .post('/api/auth/signup')
+        .post('/api/v1/auth/signup')
         .send({
           email: 'authcheck@example.com',
           fullName: 'Auth Check',
@@ -144,7 +144,7 @@ describe('Auth API Integration Tests', () => {
       const cookie = signupResponse.headers['set-cookie'];
 
       const response = await request(app)
-        .get('/api/auth/check')
+        .get('/api/v1/auth/check')
         .set('Cookie', cookie)
         .expect(200);
 
@@ -153,17 +153,17 @@ describe('Auth API Integration Tests', () => {
 
     test('should fail without authentication', async () => {
       const response = await request(app)
-        .get('/api/auth/check')
+        .get('/api/v1/auth/check')
         .expect(401);
 
       expect(response.body.success).toBe(false);
     });
   });
 
-  describe('POST /api/auth/logout', () => {
+  describe('POST /api/v1/auth/logout', () => {
     test('should clear authentication cookie', async () => {
       const signupResponse = await request(app)
-        .post('/api/auth/signup')
+        .post('/api/v1/auth/signup')
         .send({
           email: 'logout@example.com',
           fullName: 'Logout Test',
@@ -173,7 +173,7 @@ describe('Auth API Integration Tests', () => {
       const cookie = signupResponse.headers['set-cookie'];
 
       const response = await request(app)
-        .post('/api/auth/logout')
+        .post('/api/v1/auth/logout')
         .set('Cookie', cookie)
         .expect(200);
 
@@ -184,10 +184,10 @@ describe('Auth API Integration Tests', () => {
     });
   });
 
-  describe('PUT /api/auth/updateProfile', () => {
+  describe('PUT /api/v1/auth/updateProfile', () => {
     test('should update user profile', async () => {
       const signupResponse = await request(app)
-        .post('/api/auth/signup')
+        .post('/api/v1/auth/signup')
         .send({
           email: 'update@example.com',
           fullName: 'Original Name',
@@ -198,7 +198,7 @@ describe('Auth API Integration Tests', () => {
       const userId = signupResponse.body._id;
 
       const response = await request(app)
-        .put('/api/auth/updateProfile')
+        .put('/api/v1/auth/updateProfile')
         .set('Cookie', cookie)
         .send({
           fullName: 'Updated Name'
@@ -213,7 +213,7 @@ describe('Auth API Integration Tests', () => {
 
     test('should fail without authentication', async () => {
       await request(app)
-        .put('/api/auth/updateProfile')
+        .put('/api/v1/auth/updateProfile')
         .send({ fullName: 'New Name' })
         .expect(401);
     });

@@ -15,14 +15,14 @@ describe('Message API Integration Tests', () => {
     cookie2 = users[1].cookie;
   });
 
-  describe('POST /api/messages/send/:id', () => {
+  describe('POST /api/v1/messages/send/:id', () => {
     test('should send a message between users', async () => {
       const messageData = {
         text: 'Hello from user 1 to user 2'
       };
 
       const response = await request(app)
-        .post(`/api/messages/send/${user2._id}`)
+        .post(`/api/v1/messages/send/${user2._id}`)
         .set('Cookie', cookie1)
         .send(messageData)
         .expect(201);
@@ -39,7 +39,7 @@ describe('Message API Integration Tests', () => {
 
     test('should fail with empty message', async () => {
       const response = await request(app)
-        .post(`/api/messages/send/${user2._id}`)
+        .post(`/api/v1/messages/send/${user2._id}`)
         .set('Cookie', cookie1)
         .send({ text: '' })
         .expect(400);
@@ -49,33 +49,33 @@ describe('Message API Integration Tests', () => {
 
     test('should fail without authentication', async () => {
       await request(app)
-        .post(`/api/messages/send/${user2._id}`)
+        .post(`/api/v1/messages/send/${user2._id}`)
         .send({ text: 'Hello' })
         .expect(401);
     });
   });
 
-  describe('GET /api/messages/:id', () => {
+  describe('GET /api/v1/messages/:id', () => {
     beforeEach(async () => {
       await request(app)
-        .post(`/api/messages/send/${user2._id}`)
+        .post(`/api/v1/messages/send/${user2._id}`)
         .set('Cookie', cookie1)
         .send({ text: 'Message 1 from user1' });
 
       await request(app)
-        .post(`/api/messages/send/${user1._id}`)
+        .post(`/api/v1/messages/send/${user1._id}`)
         .set('Cookie', cookie2)
         .send({ text: 'Message 2 from user2' });
 
       await request(app)
-        .post(`/api/messages/send/${user2._id}`)
+        .post(`/api/v1/messages/send/${user2._id}`)
         .set('Cookie', cookie1)
         .send({ text: 'Message 3 from user1' });
     });
 
     test('should retrieve conversation between two users', async () => {
       const response = await request(app)
-        .get(`/api/messages/${user2._id}`)
+        .get(`/api/v1/messages/${user2._id}`)
         .set('Cookie', cookie1)
         .expect(200);
 
@@ -88,7 +88,7 @@ describe('Message API Integration Tests', () => {
 
     test('should support pagination', async () => {
       const response = await request(app)
-        .get(`/api/messages/${user2._id}?limit=2`)
+        .get(`/api/v1/messages/${user2._id}?limit=2`)
         .set('Cookie', cookie1)
         .expect(200);
 
@@ -105,7 +105,7 @@ describe('Message API Integration Tests', () => {
       await firstMessage.save();
 
       const response = await request(app)
-        .get(`/api/messages/${user2._id}`)
+        .get(`/api/v1/messages/${user2._id}`)
         .set('Cookie', cookie1)
         .expect(200);
 
@@ -113,15 +113,15 @@ describe('Message API Integration Tests', () => {
     });
   });
 
-  describe('GET /api/messages/users', () => {
+  describe('GET /api/v1/messages/users', () => {
     test('should return list of users with last message', async () => {
       await request(app)
-        .post(`/api/messages/send/${user2._id}`)
+        .post(`/api/v1/messages/send/${user2._id}`)
         .set('Cookie', cookie1)
         .send({ text: 'Last message' });
 
       const response = await request(app)
-        .get('/api/messages/users')
+        .get('/api/v1/messages/users')
         .set('Cookie', cookie1)
         .expect(200);
 
@@ -131,17 +131,17 @@ describe('Message API Integration Tests', () => {
     });
   });
 
-  describe('PUT /api/messages/:id', () => {
+  describe('PUT /api/v1/messages/:id', () => {
     test('should edit own message', async () => {
       const sendResponse = await request(app)
-        .post(`/api/messages/send/${user2._id}`)
+        .post(`/api/v1/messages/send/${user2._id}`)
         .set('Cookie', cookie1)
         .send({ text: 'Original message' });
 
       const messageId = sendResponse.body.message._id;
 
       const response = await request(app)
-        .put(`/api/messages/${messageId}`)
+        .put(`/api/v1/messages/${messageId}`)
         .set('Cookie', cookie1)
         .send({ text: 'Edited message' })
         .expect(200);
@@ -157,14 +157,14 @@ describe('Message API Integration Tests', () => {
 
     test('should fail to edit another user message', async () => {
       const sendResponse = await request(app)
-        .post(`/api/messages/send/${user2._id}`)
+        .post(`/api/v1/messages/send/${user2._id}`)
         .set('Cookie', cookie1)
         .send({ text: 'Message from user1' });
 
       const messageId = sendResponse.body.message._id;
 
       const response = await request(app)
-        .put(`/api/messages/${messageId}`)
+        .put(`/api/v1/messages/${messageId}`)
         .set('Cookie', cookie2)
         .send({ text: 'Trying to edit' })
         .expect(403);
@@ -173,17 +173,17 @@ describe('Message API Integration Tests', () => {
     });
   });
 
-  describe('DELETE /api/messages/:id', () => {
+  describe('DELETE /api/v1/messages/:id', () => {
     test('should soft delete own message', async () => {
       const sendResponse = await request(app)
-        .post(`/api/messages/send/${user2._id}`)
+        .post(`/api/v1/messages/send/${user2._id}`)
         .set('Cookie', cookie1)
         .send({ text: 'Message to delete' });
 
       const messageId = sendResponse.body.message._id;
 
       const response = await request(app)
-        .delete(`/api/messages/${messageId}`)
+        .delete(`/api/v1/messages/${messageId}`)
         .set('Cookie', cookie1)
         .expect(200);
 
@@ -196,30 +196,30 @@ describe('Message API Integration Tests', () => {
 
     test('should fail to delete another user message', async () => {
       const sendResponse = await request(app)
-        .post(`/api/messages/send/${user2._id}`)
+        .post(`/api/v1/messages/send/${user2._id}`)
         .set('Cookie', cookie1)
         .send({ text: 'Message from user1' });
 
       const messageId = sendResponse.body.message._id;
 
       await request(app)
-        .delete(`/api/messages/${messageId}`)
+        .delete(`/api/v1/messages/${messageId}`)
         .set('Cookie', cookie2)
         .expect(403);
     });
   });
 
-  describe('POST /api/messages/:id/reaction', () => {
+  describe('POST /api/v1/messages/:id/reaction', () => {
     test('should add reaction to message', async () => {
       const sendResponse = await request(app)
-        .post(`/api/messages/send/${user2._id}`)
+        .post(`/api/v1/messages/send/${user2._id}`)
         .set('Cookie', cookie1)
         .send({ text: 'React to this' });
 
       const messageId = sendResponse.body.message._id;
 
       const response = await request(app)
-        .post(`/api/messages/${messageId}/reaction`)
+        .post(`/api/v1/messages/${messageId}/reaction`)
         .set('Cookie', cookie2)
         .send({ emoji: '👍' })
         .expect(200);
@@ -234,19 +234,19 @@ describe('Message API Integration Tests', () => {
 
     test('should fail to add duplicate reaction', async () => {
       const sendResponse = await request(app)
-        .post(`/api/messages/send/${user2._id}`)
+        .post(`/api/v1/messages/send/${user2._id}`)
         .set('Cookie', cookie1)
         .send({ text: 'React to this' });
 
       const messageId = sendResponse.body.message._id;
 
       await request(app)
-        .post(`/api/messages/${messageId}/reaction`)
+        .post(`/api/v1/messages/${messageId}/reaction`)
         .set('Cookie', cookie2)
         .send({ emoji: '👍' });
 
       const response = await request(app)
-        .post(`/api/messages/${messageId}/reaction`)
+        .post(`/api/v1/messages/${messageId}/reaction`)
         .set('Cookie', cookie2)
         .send({ emoji: '👍' })
         .expect(400);

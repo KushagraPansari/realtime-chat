@@ -3,10 +3,21 @@ import http from "http";
 import express from "express";
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import helmet from 'helmet';
 import logger from "../utils/logger.js";
+import compression from 'compression';
+import { timeoutMiddleware } from '../middleware/timeout.js';
+import { performanceLogger } from '../middleware/performanceLogger.js';
+
 
 const app = express();
 
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
+app.use(compression());
+app.use(timeoutMiddleware); 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
@@ -22,6 +33,7 @@ import messageRoutes from '../routes/messageRoute.js';
 import groupRoutes from '../routes/groupRoute.js';
 
 app.use(requestLogger);
+app.use(performanceLogger);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({
@@ -32,9 +44,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api/messages', messageRoutes);
-app.use('/api/groups', groupRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/messages', messageRoutes);
+app.use('/api/v1/groups', groupRoutes);
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 app.use(notFound);
 app.use(errorHandler);

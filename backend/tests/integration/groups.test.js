@@ -18,7 +18,7 @@ describe('Group API Integration Tests', () => {
     cookie3 = users[2].cookie;
   });
 
-  describe('POST /api/groups', () => {
+  describe('POST /api/v1/groups', () => {
     test('should create a new group', async () => {
       const groupData = {
         name: 'Test Group',
@@ -27,7 +27,7 @@ describe('Group API Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/groups')
+        .post('/api/v1/groups')
         .set('Cookie', cookie1)
         .send(groupData)
         .expect(201);
@@ -55,7 +55,7 @@ describe('Group API Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/groups')
+        .post('/api/v1/groups')
         .set('Cookie', cookie1)
         .send(groupData)
         .expect(201);
@@ -72,7 +72,7 @@ describe('Group API Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/groups')
+        .post('/api/v1/groups')
         .set('Cookie', cookie1)
         .send(groupData)
         .expect(400);
@@ -82,7 +82,7 @@ describe('Group API Integration Tests', () => {
 
     test('should fail without authentication', async () => {
       await request(app)
-        .post('/api/groups')
+        .post('/api/v1/groups')
         .send({ name: 'Test' })
         .expect(401);
     });
@@ -94,7 +94,7 @@ describe('Group API Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/groups')
+        .post('/api/v1/groups')
         .set('Cookie', cookie1)
         .send(groupData)
         .expect(201);
@@ -103,10 +103,10 @@ describe('Group API Integration Tests', () => {
     });
   });
 
-  describe('GET /api/groups', () => {
+  describe('GET /api/v1/groups', () => {
     beforeEach(async () => {
       await request(app)
-        .post('/api/groups')
+        .post('/api/v1/groups')
         .set('Cookie', cookie1)
         .send({
           name: 'Group 1',
@@ -115,7 +115,7 @@ describe('Group API Integration Tests', () => {
         });
 
       await request(app)
-        .post('/api/groups')
+        .post('/api/v1/groups')
         .set('Cookie', cookie2)
         .send({
           name: 'Group 2',
@@ -126,7 +126,7 @@ describe('Group API Integration Tests', () => {
 
     test('should return all groups user is member of', async () => {
       const response = await request(app)
-        .get('/api/groups')
+        .get('/api/v1/groups')
         .set('Cookie', cookie1)
         .expect(200);
 
@@ -137,7 +137,7 @@ describe('Group API Integration Tests', () => {
 
     test('should return empty array if user has no groups', async () => {
       const response = await request(app)
-        .get('/api/groups')
+        .get('/api/v1/groups')
         .set('Cookie', cookie3)
         .expect(200);
 
@@ -146,17 +146,17 @@ describe('Group API Integration Tests', () => {
 
     test('should fail without authentication', async () => {
       await request(app)
-        .get('/api/groups')
+        .get('/api/v1/groups')
         .expect(401);
     });
   });
 
-  describe('GET /api/groups/:id', () => {
+  describe('GET /api/v1/groups/:id', () => {
     let groupId;
 
     beforeEach(async () => {
       const response = await request(app)
-        .post('/api/groups')
+        .post('/api/v1/groups')
         .set('Cookie', cookie1)
         .send({
           name: 'Test Group',
@@ -169,7 +169,7 @@ describe('Group API Integration Tests', () => {
 
     test('should return group details for members', async () => {
       const response = await request(app)
-        .get(`/api/groups/${groupId}`)
+        .get(`/api/v1/groups/${groupId}`)
         .set('Cookie', cookie1)
         .expect(200);
 
@@ -180,7 +180,7 @@ describe('Group API Integration Tests', () => {
 
     test('should fail for non-members', async () => {
       const response = await request(app)
-        .get(`/api/groups/${groupId}`)
+        .get(`/api/v1/groups/${groupId}`)
         .set('Cookie', cookie3)
         .expect(403);
 
@@ -191,18 +191,18 @@ describe('Group API Integration Tests', () => {
       const fakeId = '507f1f77bcf86cd799439011';
       
       await request(app)
-        .get(`/api/groups/${fakeId}`)
+        .get(`/api/v1/groups/${fakeId}`)
         .set('Cookie', cookie1)
         .expect(404);
     });
   });
 
-  describe('POST /api/groups/:id/members', () => {
+  describe('POST /api/v1/groups/:id/members', () => {
     let groupId;
 
     beforeEach(async () => {
       const response = await request(app)
-        .post('/api/groups')
+        .post('/api/v1/groups')
         .set('Cookie', cookie1)
         .send({
           name: 'Test Group',
@@ -214,7 +214,7 @@ describe('Group API Integration Tests', () => {
 
     test('should add members as admin', async () => {
       const response = await request(app)
-        .post(`/api/groups/${groupId}/members`)
+        .post(`/api/v1/groups/${groupId}/members`)
         .set('Cookie', cookie1)
         .send({ memberIds: [user2._id, user3._id] })
         .expect(200);
@@ -228,12 +228,12 @@ describe('Group API Integration Tests', () => {
 
     test('should fail as non-admin', async () => {
       await request(app)
-        .post(`/api/groups/${groupId}/members`)
+        .post(`/api/v1/groups/${groupId}/members`)
         .set('Cookie', cookie1)
         .send({ memberIds: [user2._id] });
 
       const response = await request(app)
-        .post(`/api/groups/${groupId}/members`)
+        .post(`/api/v1/groups/${groupId}/members`)
         .set('Cookie', cookie2)
         .send({ memberIds: [user3._id] })
         .expect(403);
@@ -243,12 +243,12 @@ describe('Group API Integration Tests', () => {
 
     test('should skip already existing members', async () => {
       await request(app)
-        .post(`/api/groups/${groupId}/members`)
+        .post(`/api/v1/groups/${groupId}/members`)
         .set('Cookie', cookie1)
         .send({ memberIds: [user2._id] });
 
       const response = await request(app)
-        .post(`/api/groups/${groupId}/members`)
+        .post(`/api/v1/groups/${groupId}/members`)
         .set('Cookie', cookie1)
         .send({ memberIds: [user2._id, user3._id] })
         .expect(200);
@@ -257,12 +257,12 @@ describe('Group API Integration Tests', () => {
     });
   });
 
-  describe('DELETE /api/groups/:id/members/:memberId', () => {
+  describe('DELETE /api/v1/groups/:id/members/:memberId', () => {
     let groupId;
 
     beforeEach(async () => {
       const response = await request(app)
-        .post('/api/groups')
+        .post('/api/v1/groups')
         .set('Cookie', cookie1)
         .send({
           name: 'Test Group',
@@ -274,7 +274,7 @@ describe('Group API Integration Tests', () => {
 
     test('should remove member as admin', async () => {
       const response = await request(app)
-        .delete(`/api/groups/${groupId}/members/${user2._id}`)
+        .delete(`/api/v1/groups/${groupId}/members/${user2._id}`)
         .set('Cookie', cookie1)
         .expect(200);
 
@@ -291,7 +291,7 @@ describe('Group API Integration Tests', () => {
 
     test('should fail to remove group creator', async () => {
       const response = await request(app)
-        .delete(`/api/groups/${groupId}/members/${user1._id}`)
+        .delete(`/api/v1/groups/${groupId}/members/${user1._id}`)
         .set('Cookie', cookie1)
         .expect(400);
 
@@ -301,7 +301,7 @@ describe('Group API Integration Tests', () => {
 
     test('should fail as non-admin', async () => {
       const response = await request(app)
-        .delete(`/api/groups/${groupId}/members/${user3._id}`)
+        .delete(`/api/v1/groups/${groupId}/members/${user3._id}`)
         .set('Cookie', cookie2)
         .expect(403);
 
@@ -309,12 +309,12 @@ describe('Group API Integration Tests', () => {
     });
   });
 
-  describe('POST /api/groups/:id/leave', () => {
+  describe('POST /api/v1/groups/:id/leave', () => {
     let groupId;
 
     beforeEach(async () => {
       const response = await request(app)
-        .post('/api/groups')
+        .post('/api/v1/groups')
         .set('Cookie', cookie1)
         .send({
           name: 'Test Group',
@@ -326,7 +326,7 @@ describe('Group API Integration Tests', () => {
 
     test('should allow member to leave group', async () => {
       const response = await request(app)
-        .post(`/api/groups/${groupId}/leave`)
+        .post(`/api/v1/groups/${groupId}/leave`)
         .set('Cookie', cookie2)
         .expect(200);
 
@@ -338,7 +338,7 @@ describe('Group API Integration Tests', () => {
 
     test('should fail if creator tries to leave', async () => {
       const response = await request(app)
-        .post(`/api/groups/${groupId}/leave`)
+        .post(`/api/v1/groups/${groupId}/leave`)
         .set('Cookie', cookie1)
         .expect(400);
 
@@ -347,12 +347,12 @@ describe('Group API Integration Tests', () => {
     });
   });
 
-  describe('DELETE /api/groups/:id', () => {
+  describe('DELETE /api/v1/groups/:id', () => {
     let groupId;
 
     beforeEach(async () => {
       const response = await request(app)
-        .post('/api/groups')
+        .post('/api/v1/groups')
         .set('Cookie', cookie1)
         .send({
           name: 'Test Group',
@@ -364,7 +364,7 @@ describe('Group API Integration Tests', () => {
 
     test('should delete group as creator', async () => {
       const response = await request(app)
-        .delete(`/api/groups/${groupId}`)
+        .delete(`/api/v1/groups/${groupId}`)
         .set('Cookie', cookie1)
         .expect(200);
 
@@ -376,12 +376,12 @@ describe('Group API Integration Tests', () => {
 
     test('should soft delete group messages', async () => {
       await request(app)
-        .post(`/api/messages/group/${groupId}`)
+        .post(`/api/v1/messages/group/${groupId}`)
         .set('Cookie', cookie1)
         .send({ text: 'Group message' });
 
       await request(app)
-        .delete(`/api/groups/${groupId}`)
+        .delete(`/api/v1/groups/${groupId}`)
         .set('Cookie', cookie1);
 
       const messages = await Message.find({ groupId });
@@ -391,7 +391,7 @@ describe('Group API Integration Tests', () => {
 
     test('should fail if non-creator tries to delete', async () => {
       const response = await request(app)
-        .delete(`/api/groups/${groupId}`)
+        .delete(`/api/v1/groups/${groupId}`)
         .set('Cookie', cookie2)
         .expect(403);
 
@@ -402,12 +402,12 @@ describe('Group API Integration Tests', () => {
     });
   });
 
-  describe('POST /api/messages/group/:id', () => {
+  describe('POST /api/v1/messages/group/:id', () => {
     let groupId;
 
     beforeEach(async () => {
       const response = await request(app)
-        .post('/api/groups')
+        .post('/api/v1/groups')
         .set('Cookie', cookie1)
         .send({
           name: 'Test Group',
@@ -419,7 +419,7 @@ describe('Group API Integration Tests', () => {
 
     test('should send message to group', async () => {
       const response = await request(app)
-        .post(`/api/messages/group/${groupId}`)
+        .post(`/api/v1/messages/group/${groupId}`)
         .set('Cookie', cookie1)
         .send({ text: 'Hello group!' })
         .expect(201);
@@ -435,7 +435,7 @@ describe('Group API Integration Tests', () => {
 
     test('should fail for non-members', async () => {
       const response = await request(app)
-        .post(`/api/messages/group/${groupId}`)
+        .post(`/api/v1/messages/group/${groupId}`)
         .set('Cookie', cookie3)
         .send({ text: 'Hello' })
         .expect(403);
@@ -445,19 +445,19 @@ describe('Group API Integration Tests', () => {
 
     test('should fail with empty message', async () => {
       await request(app)
-        .post(`/api/messages/group/${groupId}`)
+        .post(`/api/v1/messages/group/${groupId}`)
         .set('Cookie', cookie1)
         .send({ text: '' })
         .expect(400);
     });
   });
 
-  describe('GET /api/messages/group/:id/messages', () => {
+  describe('GET /api/v1/messages/group/:id/messages', () => {
     let groupId;
 
     beforeEach(async () => {
       const response = await request(app)
-        .post('/api/groups')
+        .post('/api/v1/groups')
         .set('Cookie', cookie1)
         .send({
           name: 'Test Group',
@@ -467,24 +467,24 @@ describe('Group API Integration Tests', () => {
       groupId = response.body.group._id;
 
       await request(app)
-        .post(`/api/messages/group/${groupId}`)
+        .post(`/api/v1/messages/group/${groupId}`)
         .set('Cookie', cookie1)
         .send({ text: 'Message 1' });
 
       await request(app)
-        .post(`/api/messages/group/${groupId}`)
+        .post(`/api/v1/messages/group/${groupId}`)
         .set('Cookie', cookie2)
         .send({ text: 'Message 2' });
 
       await request(app)
-        .post(`/api/messages/group/${groupId}`)
+        .post(`/api/v1/messages/group/${groupId}`)
         .set('Cookie', cookie1)
         .send({ text: 'Message 3' });
     });
 
     test('should retrieve group messages', async () => {
       const response = await request(app)
-        .get(`/api/messages/group/${groupId}/messages`)
+        .get(`/api/v1/messages/group/${groupId}/messages`)
         .set('Cookie', cookie1)
         .expect(200);
 
@@ -495,7 +495,7 @@ describe('Group API Integration Tests', () => {
 
     test('should support pagination', async () => {
       const response = await request(app)
-        .get(`/api/messages/group/${groupId}/messages?limit=2`)
+        .get(`/api/v1/messages/group/${groupId}/messages?limit=2`)
         .set('Cookie', cookie1)
         .expect(200);
 
@@ -505,7 +505,7 @@ describe('Group API Integration Tests', () => {
 
     test('should fail for non-members', async () => {
       await request(app)
-        .get(`/api/messages/group/${groupId}/messages`)
+        .get(`/api/v1/messages/group/${groupId}/messages`)
         .set('Cookie', cookie3)
         .expect(403);
     });
