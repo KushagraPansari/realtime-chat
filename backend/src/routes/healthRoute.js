@@ -1,42 +1,100 @@
 import express from 'express';
-import redis from '../config/redis.js';
 import mongoose from 'mongoose';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 
-router.get('/health', async (req, res) => {
-  const health = {
+router.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    timestamp: Date.now(),
-    status: 'OK',
+    environment: process.env.NODE_ENV
+  });
+});
+
+router.get('/detailed', async (req, res) => {
+  const health = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV,
+    version: process.env.npm_package_version || '1.0.0',
     services: {
-      mongodb: 'unknown',
-      redis: 'unknown'
+      mongodb: { status: 'unknown' },
+      redis: { status: 'unknown' }
+    },
+    memory: {
+      heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
+      heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + ' MB'
     }
   };
 
   try {
-    if (mongoose.connection.readyState === 1) {
-      health.services.mongodb = 'connected';
+    const mongoState = mongoose.connection.readyState;
+    const states = {
+      0: 'disconnected',
+      1: 'connected',
+      2: 'connecting',
+      3: 'disconnecting'
+    };
+    
+    health.services.mongodb.status = states[mongoState] || 'unknown';
+    
+    if (mongoState === 1) {
+      await mongoose.connection.db.admin().ping();
+      health.services.mongodb.latency = 'ok';
     } else {
-      health.services.mongodb = 'disconnected';
-      health.status = 'DEGRADED';
+      health.status = 'degraded';
     }
   } catch (error) {
-    health.services.mongodb = 'error';
-    health.status = 'DEGRADED';
+    health.services.mongodb.status = 'error';
+    health.services.mongodb.error = error.message;
+    health.status = 'degraded';
+    logger.error('Health check MongoDB error', { error: error.message });
   }
 
   try {
+    const redis = (await import('../config/redis.js')).default;
+    const startTime = Date.now();
     await redis.ping();
-    health.services.redis = 'connected';
+    const latency = Date.now() - startTime;
+    
+    health.services.redis.status = 'connected';
+    health.services.redis.latency = `${latency}ms`;
   } catch (error) {
-    health.services.redis = 'disconnected';
-    health.status = 'DEGRADED';
+    if (error.code === 'ECONNREFUSED' || error.message.includes('not available')) {
+      health.services.redis.status = 'not configured';
+    } else {
+      health.services.redis.status = 'error';
+      health.services.redis.error = error.message;
+    }
   }
 
-  const statusCode = health.status === 'OK' ? 200 : 503;
+  const statusCode = health.status === 'ok' ? 200 : 503;
   res.status(statusCode).json(health);
+});
+
+router.get('/ready', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        ready: false,
+        reason: 'Database not connected'
+      });
+    }
+    
+    res.status(200).json({ ready: true });
+  } catch (error) {
+    res.status(503).json({
+      ready: false,
+      reason: error.message
+    });
+  }
+});
+
+router.get('/live', (req, res) => {
+  res.status(200).json({ alive: true });
 });
 
 export default router;
