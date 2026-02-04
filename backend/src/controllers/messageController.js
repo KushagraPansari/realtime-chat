@@ -86,7 +86,7 @@ export const getUsersForSidebar = async (req, res, next) => {
   }
 };
 
-export const getMessages = async (req, res) => {
+export const getMessages = async (req, res, next) => {
     try {
     const { id: userToChatId } = req.params;
     const { cursor, limit = 50 } = req.query;
@@ -124,7 +124,7 @@ export const getMessages = async (req, res) => {
   }
 }
 
-export const sendMessage = async (req, res) => {
+export const sendMessage = async (req, res, next) => {
     try {
         const { text, image } = req.body;
         const { id: receiverId } = req.params;
@@ -155,11 +155,7 @@ export const sendMessage = async (req, res) => {
             message: newMessage
         });
     } catch (error) {
-        console.log("Error in sendMessage", error.message);
-        res.status(500).json({ 
-            success: false,
-            message: "Server Error" 
-        });
+        next(error);
     }
 }
 
