@@ -4,23 +4,28 @@ export const sendMessageSchema = Joi.object({
   text: Joi.string()
     .min(1)
     .max(2000)
-    .when('image', {
-      is: Joi.exist(),
-      then: Joi.optional(),
-      otherwise: Joi.required()
-    })
+    .optional()
+    .allow('')
     .messages({
       'string.min': 'Message cannot be empty',
-      'string.max': 'Message cannot exceed 2000 characters',
-      'any.required': 'Message text or image is required'
+      'string.max': 'Message cannot exceed 2000 characters'
     }),
   image: Joi.string()
     .optional()
+    .allow(null, '')
     .messages({
       'string.base': 'Image must be a valid base64 string'
     })
-}).or('text', 'image').messages({
-  'object.missing': 'Either text or image is required'
+}).custom((value, helpers) => {
+  const hasText = value.text && value.text.trim().length > 0;
+  const hasImage = value.image && value.image.length > 0;
+  
+  if (!hasText && !hasImage) {
+    return helpers.error('any.custom', { message: 'Either text or image is required' });
+  }
+  return value;
+}).messages({
+  'any.custom': 'Either text or image is required'
 });
 
 export const editMessageSchema = Joi.object({

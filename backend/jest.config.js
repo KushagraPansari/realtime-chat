@@ -4,7 +4,7 @@ export default {
   moduleFileExtensions: ["js", "mjs"],
   testMatch: ["**/tests/**/*.test.js"],
   setupFilesAfterEnv: ["./tests/setup.js"],
-  testTimeout: 30000, // 30 seconds for database operations
+  testTimeout: 30000,
   verbose: true,
   collectCoverageFrom: [
     'src/**/*.js',
@@ -12,5 +12,5 @@ export default {
     '!src/**/*.test.js'
   ],
   coverageDirectory: 'coverage',
-  maxWorkers: 1 // Run tests serially to avoid database conflicts
+  maxWorkers: 1 
 };
