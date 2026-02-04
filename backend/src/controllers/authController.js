@@ -43,11 +43,14 @@ export const signup = async (req, res) => {
       await newUser.save();
 
       res.status(201).json({
+      success: true,
+      user: {
         _id: newUser._id,
         fullName: newUser.fullName,
         email: newUser.email,
         profilePic: newUser.profilePic,
-      });
+      }
+    });
     } else {
       res.status(400).json({ 
         success: false,
@@ -163,7 +166,10 @@ export const updateProfile = async (req, res) => {
 
 export const checkAuth = (req, res) => {
   try {
-    res.status(200).json(req.user);
+    res.status(200).json({
+    success: true,
+    user: req.user
+  });
   } catch (error) {
     console.log("Error in checkAuth controller", error.message);
     res.status(500).json({ 
