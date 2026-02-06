@@ -6,7 +6,9 @@ import {
   addMembers,
   removeMember,
   leaveGroup,
-  deleteGroup
+  deleteGroup,
+  promoteMember,
+  updateGroup
 } from "../controllers/groupController.js";
 import { isLoggedIn } from "../middleware/authMiddleware.js";
 import { validate } from "../middleware/validate.js";
@@ -14,12 +16,17 @@ import { createGroupSchema, addMembersSchema } from "../validators/messageValida
 
 const router = express.Router();
 
-router.post("/", isLoggedIn, validate(createGroupSchema), createGroup);
-router.get("/", isLoggedIn, getUserGroups);
-router.get("/:id", isLoggedIn, getGroupDetails);
-router.post("/:id/members", isLoggedIn, validate(addMembersSchema), addMembers);
-router.delete("/:id/members/:memberId", isLoggedIn, removeMember);
-router.post("/:id/leave", isLoggedIn, leaveGroup);
-router.delete("/:id", isLoggedIn, deleteGroup);
+router.use(isLoggedIn);
+
+router.post("/", validate(createGroupSchema), createGroup);
+router.get("/", getUserGroups);
+router.get("/:id", getGroupDetails);
+router.put("/:id", updateGroup);
+
+router.post("/:id/members", validate(addMembersSchema), addMembers);
+router.delete("/:id/members/:memberId", removeMember);
+router.put("/:id/members/:memberId/promote", promoteMember);
+router.post("/:id/leave", leaveGroup);
+router.delete("/:id", deleteGroup);
 
 export default router;
