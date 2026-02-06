@@ -8,9 +8,6 @@ export const AUTH = {
 
 export const MESSAGES = {
   MAX_LENGTH: 2000,
-  EDIT_WINDOW_MS: 15 * 60 * 1000,
-  DEFAULT_PAGE_SIZE: 50,
-  MAX_PAGE_SIZE: 100,
 };
 
 export const LIMITS = {
@@ -19,12 +16,17 @@ export const LIMITS = {
   DEFAULT_PAGE_SIZE: 50,
   MAX_PAGE_SIZE: 100,
   MESSAGE_EDIT_WINDOW_MS: 15 * 60 * 1000,
+  MAX_GROUP_MEMBERS: 50,
 };
 
 export const GROUPS = {
-  MAX_MEMBERS: 50,
   NAME_MIN_LENGTH: 1,
   NAME_MAX_LENGTH: 100,
+};
+
+export const GROUP_ROLES = {
+  ADMIN: 'admin',
+  MEMBER: 'member',
 };
 
 export const UPLOADS = {
@@ -63,7 +65,6 @@ export const SOCKET_EVENTS = {
   GROUP_TYPING: 'groupTyping',
   
   GET_ONLINE_USERS: 'getOnlineUsers',
-  ONLINE_USERS: 'getOnlineUsers',
   NEW_MESSAGE: 'newMessage',
   NEW_GROUP_MESSAGE: 'newGroupMessage',
   USER_TYPING: 'userTyping',
