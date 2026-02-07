@@ -68,7 +68,9 @@ export const createGroupSchema = Joi.object({
       'string.max': 'Description cannot exceed 500 characters'
     }),
   memberIds: Joi.array()
-    .items(Joi.string())
+    .items(Joi.string().pattern(/^[0-9a-fA-F]{24}$/).messages({
+      'string.pattern.base': 'Each member ID must be a valid ID'
+    }))
     .optional()
     .messages({
       'array.base': 'Member IDs must be an array'
@@ -77,7 +79,9 @@ export const createGroupSchema = Joi.object({
 
 export const addMembersSchema = Joi.object({
   memberIds: Joi.array()
-    .items(Joi.string())
+    .items(Joi.string().pattern(/^[0-9a-fA-F]{24}$/).messages({
+      'string.pattern.base': 'Each member ID must be a valid ID'
+    }))
     .min(1)
     .required()
     .messages({

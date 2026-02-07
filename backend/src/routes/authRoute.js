@@ -15,7 +15,7 @@ router.post('/signup', rateLimiter, validate(signupSchema), signup);
 router.post('/login', rateLimiter, validate(loginSchema), login);
 router.post('/logout', logout);
 
-router.put('/updateProfile', isLoggedIn, updateProfile);
+router.put('/updateProfile', isLoggedIn, validate(updateProfileSchema), updateProfile);
 
 router.get('/check', isLoggedIn, checkAuth);
 
