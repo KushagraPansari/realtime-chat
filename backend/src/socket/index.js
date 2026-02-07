@@ -88,7 +88,7 @@ export const getIO = () => {
 
 export const getReceiverSocketId = async (userId) => {
   if (!connectionHandler) {
-    throw new Error('Socket.io not initialized');
+    return null;
   }
   return connectionHandler.getReceiverSocketId(userId);
 };
@@ -101,15 +101,25 @@ export const getOnlineUsers = async () => {
 };
 
 export const emitToUser = async (userId, event, data) => {
+  if (!io) return;
   const socketId = await getReceiverSocketId(userId);
   if (socketId) {
     io.to(socketId).emit(event, data);
-    return true;
   }
-  return false;
 };
 
-export const emitToGroup = (groupId, event, data) => {
+export const emitToGroup = async (groupId, event, data, excludeUserId = null) => {
+  if (!io) return;
+  if (excludeUserId) {
+    const senderSocketId = await getReceiverSocketId(excludeUserId);
+    if (senderSocketId) {
+      const senderSocket = io.sockets.sockets.get(senderSocketId);
+      if (senderSocket) {
+        senderSocket.to(groupId).emit(event, data);
+        return;
+      }
+    }
+  }
   io.to(groupId).emit(event, data);
 };
 

@@ -238,7 +238,7 @@ class MessageService {
       .populate('senderId', 'fullName profilePic')
       .lean();
 
-    emitToGroup(groupId.toString(), SOCKET_EVENTS.NEW_GROUP_MESSAGE, populatedMessage);
+    emitToGroup(groupId.toString(), SOCKET_EVENTS.NEW_GROUP_MESSAGE, populatedMessage, senderId);
 
     logger.info('Group message sent', {
       messageId: message._id,
@@ -321,6 +321,12 @@ class MessageService {
         text: message.text,
         editedAt: message.editedAt
       });
+    } else if (message.groupId) {
+      emitToGroup(message.groupId.toString(), SOCKET_EVENTS.MESSAGE_EDITED, {
+        messageId,
+        text: message.text,
+        editedAt: message.editedAt
+      }, userId);
     }
 
     logger.info('Message edited', { messageId, userId });
@@ -352,6 +358,11 @@ class MessageService {
         messageId,
         deletedAt: message.deletedAt
       });
+    } else if (message.groupId) {
+      emitToGroup(message.groupId.toString(), SOCKET_EVENTS.MESSAGE_DELETED, {
+        messageId,
+        deletedAt: message.deletedAt
+      }, userId);
     }
 
     logger.info('Message deleted', { messageId, userId });
@@ -386,6 +397,13 @@ class MessageService {
         emoji,
         action: 'add'
       });
+    } else if (message.groupId) {
+      emitToGroup(message.groupId.toString(), SOCKET_EVENTS.MESSAGE_REACTION, {
+        messageId,
+        userId,
+        emoji,
+        action: 'add'
+      }, userId);
     }
 
     return message.reactions;
@@ -411,6 +429,13 @@ class MessageService {
         emoji,
         action: 'remove'
       });
+    } else if (message.groupId) {
+      emitToGroup(message.groupId.toString(), SOCKET_EVENTS.MESSAGE_REACTION, {
+        messageId,
+        userId,
+        emoji,
+        action: 'remove'
+      }, userId);
     }
 
     return message.reactions;
