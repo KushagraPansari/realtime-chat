@@ -41,10 +41,21 @@ class Cache {
 
   async delPattern(pattern) {
     try {
-      const keys = await redis.keys(pattern);
-      if (keys.length > 0) {
-        await redis.del(...keys);
-        logger.debug(`Cache deleted ${keys.length} keys matching: ${pattern}`);
+      let cursor = '0';
+      let deletedCount = 0;
+
+      do {
+        const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+        cursor = nextCursor;
+
+        if (keys.length > 0) {
+          await redis.del(...keys);
+          deletedCount += keys.length;
+        }
+      } while (cursor !== '0');
+
+      if (deletedCount > 0) {
+        logger.debug(`Cache deleted ${deletedCount} keys matching: ${pattern}`);
       }
     } catch (error) {
       logger.error(`Cache delete pattern error for ${pattern}:`, error);
