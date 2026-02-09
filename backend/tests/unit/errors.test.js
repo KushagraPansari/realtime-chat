@@ -58,7 +58,7 @@ describe('Custom Error Classes', () => {
 
   describe('NotFoundError', () => {
     test('should have 404 status code', () => {
-      const error = new NotFoundError('Resource not found');
+      const error = new NotFoundError('Resource');
       
       expect(error.statusCode).toBe(404);
       expect(error.message).toBe('Resource not found');

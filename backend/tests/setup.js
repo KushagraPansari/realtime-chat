@@ -25,24 +25,6 @@ beforeAll(async () => {
 afterAll(async () => {
   await mongoose.disconnect();
   await mongoServer.stop();
-  
-  try {
-    const { io, server } = await import('../src/config/socket.js');
-    
-    if (io && io.close) {
-      await new Promise((resolve) => {
-        io.close(() => resolve());
-      });
-    }
-    
-    if (server && server.close) {
-      await new Promise((resolve) => {
-        server.close(() => resolve());
-      });
-    }
-  } catch (error) {
-  }
-  
   console.log('✓ Test database disconnected');
 }, 10000);
 

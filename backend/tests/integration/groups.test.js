@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { app } from '../../src/config/socket.js';
+import { app } from '../testUtils.js';
 import Group from '../../src/models/groupModel.js';
 import Message from '../../src/models/messageModel.js';
 import { createTestUsers } from '../testUtils.js';
@@ -33,15 +33,15 @@ describe('Group API Integration Tests', () => {
         .expect(201);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.group.name).toBe(groupData.name);
-      expect(response.body.group.members).toHaveLength(3);
+      expect(response.body.data.group.name).toBe(groupData.name);
+      expect(response.body.data.group.members).toHaveLength(3);
       
-      const creator = response.body.group.members.find(
+      const creator = response.body.data.group.members.find(
         m => m.userId._id === user1._id
       );
       expect(creator.role).toBe('admin');
 
-      const groupInDb = await Group.findById(response.body.group._id);
+      const groupInDb = await Group.findById(response.body.data.group._id);
       expect(groupInDb).toBeDefined();
       expect(groupInDb.name).toBe(groupData.name);
       expect(groupInDb.createdBy.toString()).toBe(user1._id);
@@ -60,9 +60,9 @@ describe('Group API Integration Tests', () => {
         .send(groupData)
         .expect(201);
 
-      expect(response.body.group.members).toHaveLength(1);
-      expect(response.body.group.members[0].userId._id).toBe(user1._id);
-      expect(response.body.group.members[0].role).toBe('admin');
+      expect(response.body.data.group.members).toHaveLength(1);
+      expect(response.body.data.group.members[0].userId._id).toBe(user1._id);
+      expect(response.body.data.group.members[0].role).toBe('admin');
     });
 
     test('should fail with invalid name', async () => {
@@ -99,7 +99,7 @@ describe('Group API Integration Tests', () => {
         .send(groupData)
         .expect(201);
 
-      expect(response.body.group.members).toHaveLength(3);
+      expect(response.body.data.group.members).toHaveLength(3);
     });
   });
 
@@ -131,8 +131,8 @@ describe('Group API Integration Tests', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.groups).toHaveLength(2);
-      expect(response.body.groups[0].name).toBeDefined();
+      expect(response.body.data.groups).toHaveLength(2);
+      expect(response.body.data.groups[0].name).toBeDefined();
     });
 
     test('should return empty array if user has no groups', async () => {
@@ -141,7 +141,7 @@ describe('Group API Integration Tests', () => {
         .set('Cookie', cookie3)
         .expect(200);
 
-      expect(response.body.groups).toHaveLength(0);
+      expect(response.body.data.groups).toHaveLength(0);
     });
 
     test('should fail without authentication', async () => {
@@ -164,7 +164,7 @@ describe('Group API Integration Tests', () => {
           memberIds: [user2._id]
         });
       
-      groupId = response.body.group._id;
+      groupId = response.body.data.group._id;
     });
 
     test('should return group details for members', async () => {
@@ -174,8 +174,8 @@ describe('Group API Integration Tests', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.group._id).toBe(groupId);
-      expect(response.body.group.members).toBeDefined();
+      expect(response.body.data.group._id).toBe(groupId);
+      expect(response.body.data.group.members).toBeDefined();
     });
 
     test('should fail for non-members', async () => {
@@ -209,7 +209,7 @@ describe('Group API Integration Tests', () => {
           memberIds: []
         });
       
-      groupId = response.body.group._id;
+      groupId = response.body.data.group._id;
     });
 
     test('should add members as admin', async () => {
@@ -220,7 +220,7 @@ describe('Group API Integration Tests', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.group.members).toHaveLength(3);
+      expect(response.body.data.group.members).toHaveLength(3);
 
       const groupInDb = await Group.findById(groupId);
       expect(groupInDb.members).toHaveLength(3);
@@ -253,7 +253,7 @@ describe('Group API Integration Tests', () => {
         .send({ memberIds: [user2._id, user3._id] })
         .expect(200);
 
-      expect(response.body.group.members).toHaveLength(3);
+      expect(response.body.data.group.members).toHaveLength(3);
     });
   });
 
@@ -269,7 +269,7 @@ describe('Group API Integration Tests', () => {
           memberIds: [user2._id, user3._id]
         });
       
-      groupId = response.body.group._id;
+      groupId = response.body.data.group._id;
     });
 
     test('should remove member as admin', async () => {
@@ -296,7 +296,7 @@ describe('Group API Integration Tests', () => {
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('creator');
+      expect(response.body.error.message).toContain('creator');
     });
 
     test('should fail as non-admin', async () => {
@@ -321,7 +321,7 @@ describe('Group API Integration Tests', () => {
           memberIds: [user2._id]
         });
       
-      groupId = response.body.group._id;
+      groupId = response.body.data.group._id;
     });
 
     test('should allow member to leave group', async () => {
@@ -343,7 +343,7 @@ describe('Group API Integration Tests', () => {
         .expect(400);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('creator');
+      expect(response.body.error.message).toContain('creator');
     });
   });
 
@@ -359,7 +359,7 @@ describe('Group API Integration Tests', () => {
           memberIds: [user2._id]
         });
       
-      groupId = response.body.group._id;
+      groupId = response.body.data.group._id;
     });
 
     test('should delete group as creator', async () => {
@@ -414,7 +414,7 @@ describe('Group API Integration Tests', () => {
           memberIds: [user2._id]
         });
       
-      groupId = response.body.group._id;
+      groupId = response.body.data.group._id;
     });
 
     test('should send message to group', async () => {
@@ -425,11 +425,11 @@ describe('Group API Integration Tests', () => {
         .expect(201);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message.text).toBe('Hello group!');
-      expect(response.body.message.groupId).toBe(groupId);
-      expect(response.body.message.senderId._id).toBe(user1._id);
+      expect(response.body.data.message.text).toBe('Hello group!');
+      expect(response.body.data.message.groupId).toBe(groupId);
+      expect(response.body.data.message.senderId._id).toBe(user1._id);
 
-      const messageInDb = await Message.findById(response.body.message._id);
+      const messageInDb = await Message.findById(response.body.data.message._id);
       expect(messageInDb.groupId.toString()).toBe(groupId);
     });
 
@@ -464,7 +464,7 @@ describe('Group API Integration Tests', () => {
           memberIds: [user2._id]
         });
       
-      groupId = response.body.group._id;
+      groupId = response.body.data.group._id;
 
       await request(app)
         .post(`/api/v1/messages/group/${groupId}`)
@@ -489,8 +489,8 @@ describe('Group API Integration Tests', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.messages).toHaveLength(3);
-      expect(response.body.messages[0].text).toBe('Message 1');
+      expect(response.body.data).toHaveLength(3);
+      expect(response.body.data[0].text).toBe('Message 1');
     });
 
     test('should support pagination', async () => {
@@ -499,7 +499,7 @@ describe('Group API Integration Tests', () => {
         .set('Cookie', cookie1)
         .expect(200);
 
-      expect(response.body.messages).toHaveLength(2);
+      expect(response.body.data).toHaveLength(2);
       expect(response.body.pagination.hasMore).toBe(true);
     });
 

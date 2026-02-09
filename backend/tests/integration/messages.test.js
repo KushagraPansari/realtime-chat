@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { app } from '../../src/config/socket.js';
+import { app } from '../testUtils.js';
 import Message from '../../src/models/messageModel.js';
 import { createTestUsers } from '../testUtils.js';
 
@@ -28,11 +28,11 @@ describe('Message API Integration Tests', () => {
         .expect(201);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message.text).toBe(messageData.text);
-      expect(response.body.message.senderId).toBe(user1._id);
-      expect(response.body.message.receiverId).toBe(user2._id);
+      expect(response.body.data.message.text).toBe(messageData.text);
+      expect(response.body.data.message.senderId).toBe(user1._id);
+      expect(response.body.data.message.receiverId).toBe(user2._id);
 
-      const messageInDb = await Message.findById(response.body.message._id);
+      const messageInDb = await Message.findById(response.body.data.message._id);
       expect(messageInDb).toBeDefined();
       expect(messageInDb.text).toBe(messageData.text);
     });
@@ -80,10 +80,10 @@ describe('Message API Integration Tests', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.messages).toHaveLength(3);
-      expect(response.body.messages[0].text).toBe('Message 1 from user1');
-      expect(response.body.messages[1].text).toBe('Message 2 from user2');
-      expect(response.body.messages[2].text).toBe('Message 3 from user1');
+      expect(response.body.data).toHaveLength(3);
+      expect(response.body.data[0].text).toBe('Message 1 from user1');
+      expect(response.body.data[1].text).toBe('Message 2 from user2');
+      expect(response.body.data[2].text).toBe('Message 3 from user1');
     });
 
     test('should support pagination', async () => {
@@ -92,7 +92,7 @@ describe('Message API Integration Tests', () => {
         .set('Cookie', cookie1)
         .expect(200);
 
-      expect(response.body.messages).toHaveLength(2);
+      expect(response.body.data).toHaveLength(2);
       expect(response.body.pagination.hasMore).toBe(true);
       expect(response.body.pagination.nextCursor).toBeDefined();
     });
@@ -109,7 +109,7 @@ describe('Message API Integration Tests', () => {
         .set('Cookie', cookie1)
         .expect(200);
 
-      expect(response.body.messages).toHaveLength(2);
+      expect(response.body.data).toHaveLength(2);
     });
   });
 
@@ -126,8 +126,8 @@ describe('Message API Integration Tests', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.chats).toBeDefined();
-      expect(Array.isArray(response.body.chats)).toBe(true);
+      expect(response.body.data.chats).toBeDefined();
+      expect(Array.isArray(response.body.data.chats)).toBe(true);
     });
   });
 
@@ -138,7 +138,7 @@ describe('Message API Integration Tests', () => {
         .set('Cookie', cookie1)
         .send({ text: 'Original message' });
 
-      const messageId = sendResponse.body.message._id;
+      const messageId = sendResponse.body.data.message._id;
 
       const response = await request(app)
         .put(`/api/v1/messages/${messageId}`)
@@ -147,8 +147,8 @@ describe('Message API Integration Tests', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.text).toBe('Edited message');
-      expect(response.body.data.isEdited).toBe(true);
+      expect(response.body.data.message.text).toBe('Edited message');
+      expect(response.body.data.message.isEdited).toBe(true);
 
       const messageInDb = await Message.findById(messageId);
       expect(messageInDb.text).toBe('Edited message');
@@ -161,7 +161,7 @@ describe('Message API Integration Tests', () => {
         .set('Cookie', cookie1)
         .send({ text: 'Message from user1' });
 
-      const messageId = sendResponse.body.message._id;
+      const messageId = sendResponse.body.data.message._id;
 
       const response = await request(app)
         .put(`/api/v1/messages/${messageId}`)
@@ -180,7 +180,7 @@ describe('Message API Integration Tests', () => {
         .set('Cookie', cookie1)
         .send({ text: 'Message to delete' });
 
-      const messageId = sendResponse.body.message._id;
+      const messageId = sendResponse.body.data.message._id;
 
       const response = await request(app)
         .delete(`/api/v1/messages/${messageId}`)
@@ -200,7 +200,7 @@ describe('Message API Integration Tests', () => {
         .set('Cookie', cookie1)
         .send({ text: 'Message from user1' });
 
-      const messageId = sendResponse.body.message._id;
+      const messageId = sendResponse.body.data.message._id;
 
       await request(app)
         .delete(`/api/v1/messages/${messageId}`)
@@ -216,7 +216,7 @@ describe('Message API Integration Tests', () => {
         .set('Cookie', cookie1)
         .send({ text: 'React to this' });
 
-      const messageId = sendResponse.body.message._id;
+      const messageId = sendResponse.body.data.message._id;
 
       const response = await request(app)
         .post(`/api/v1/messages/${messageId}/reaction`)
@@ -225,8 +225,8 @@ describe('Message API Integration Tests', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.reactions).toHaveLength(1);
-      expect(response.body.reactions[0].emoji).toBe('👍');
+      expect(response.body.data.reactions).toHaveLength(1);
+      expect(response.body.data.reactions[0].emoji).toBe('👍');
 
       const messageInDb = await Message.findById(messageId);
       expect(messageInDb.reactions).toHaveLength(1);
@@ -238,7 +238,7 @@ describe('Message API Integration Tests', () => {
         .set('Cookie', cookie1)
         .send({ text: 'React to this' });
 
-      const messageId = sendResponse.body.message._id;
+      const messageId = sendResponse.body.data.message._id;
 
       await request(app)
         .post(`/api/v1/messages/${messageId}/reaction`)

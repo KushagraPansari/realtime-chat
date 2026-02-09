@@ -221,7 +221,7 @@ describe('Group Validation Schemas', () => {
       const validData = {
         name: 'Test Group',
         description: 'A test group',
-        memberIds: ['123', '456']
+        memberIds: ['507f1f77bcf86cd799439011', '507f1f77bcf86cd799439012']
       };
       
       const { error } = createGroupSchema.validate(validData);
@@ -273,7 +273,7 @@ describe('Group Validation Schemas', () => {
   describe('addMembersSchema', () => {
     test('should validate member IDs array', () => {
       const validData = {
-        memberIds: ['123', '456', '789']
+        memberIds: ['507f1f77bcf86cd799439011', '507f1f77bcf86cd799439012', '507f1f77bcf86cd799439013']
       };
       
       const { error } = addMembersSchema.validate(validData);

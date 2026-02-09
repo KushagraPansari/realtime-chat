@@ -1,5 +1,7 @@
 import request from 'supertest';
-import { app } from '../src/config/socket.js';
+import { createApp } from '../src/app.js';
+
+const app = createApp();
 
 export const createTestUser = async (userData = {}) => {
   const defaultUser = {
@@ -26,7 +28,7 @@ export const createTestUser = async (userData = {}) => {
   }
 
   return {
-    user: response.body,
+    user: response.body.data.user,
     cookie: response.headers['set-cookie']
   };
 };
@@ -79,7 +81,7 @@ export const createTestGroup = async (cookie, groupData = {}) => {
     );
   }
 
-  return response.body.group;
+  return response.body.data.group;
 };
 
 export const sendTestMessage = async (cookie, receiverId, messageData = {}) => {
@@ -99,5 +101,7 @@ export const sendTestMessage = async (cookie, receiverId, messageData = {}) => {
     );
   }
 
-  return response.body;
+  return response.body.data;
 };
+
+export { app };

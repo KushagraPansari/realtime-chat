@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { app } from '../../src/config/socket.js';
+import { app } from '../testUtils.js';
 import User from '../../src/models/userModel.js';
 
 describe('Auth API Integration Tests', () => {
@@ -16,12 +16,12 @@ describe('Auth API Integration Tests', () => {
         .send(userData)
         .expect(201);
 
-      expect(response.body._id).toBeDefined();
-      expect(response.body.email).toBe(userData.email);
-      expect(response.body.fullName).toBe(userData.fullName);
-      expect(response.body.password).toBeUndefined();
+      expect(response.body.data.user._id).toBeDefined();
+      expect(response.body.data.user.email).toBe(userData.email);
+      expect(response.body.data.user.fullName).toBe(userData.fullName);
+      expect(response.body.data.user.password).toBeUndefined();
 
-      const userInDb = await User.findById(response.body._id);
+      const userInDb = await User.findById(response.body.data.user._id);
       expect(userInDb).toBeDefined();
       expect(userInDb.email).toBe(userData.email);
       expect(userInDb.password).not.toBe(userData.password); // Should be hashed
@@ -59,7 +59,7 @@ describe('Auth API Integration Tests', () => {
         .expect(409);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('already');
+      expect(response.body.error.message).toContain('already');
     });
 
     test('should fail with invalid data', async () => {
@@ -102,7 +102,7 @@ describe('Auth API Integration Tests', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.user.email).toBe('logintest@example.com');
+      expect(response.body.data.user.email).toBe('logintest@example.com');
       expect(response.headers['set-cookie']).toBeDefined();
     });
 
@@ -148,7 +148,7 @@ describe('Auth API Integration Tests', () => {
         .set('Cookie', cookie)
         .expect(200);
 
-      expect(response.body.email).toBe('authcheck@example.com');
+      expect(response.body.data.user.email).toBe('authcheck@example.com');
     });
 
     test('should fail without authentication', async () => {
@@ -195,7 +195,7 @@ describe('Auth API Integration Tests', () => {
         });
 
       const cookie = signupResponse.headers['set-cookie'];
-      const userId = signupResponse.body._id;
+      const userId = signupResponse.body.data.user._id;
 
       const response = await request(app)
         .put('/api/v1/auth/updateProfile')
